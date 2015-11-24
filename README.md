@@ -30,7 +30,7 @@ FILE "Big Buddy (Track 05).bin" BINARY
 
 Some incomplete software cannot read this style of disc image, because they only know how to work with a single bin file.
 
-This script will convert a cuesheet and series of bin files into a single bin file and updated cuesheet.
+This script will convert a cuesheet and series of bin files into a single bin file and updated cuesheet. It will not touch your existing files. It is completely non-destructive.
 
 Here is the above example after being procesed by binmerge:
 ```
