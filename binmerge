@@ -126,7 +126,7 @@ def gen_split_cuesheet(bin_filename, merged_file):
     cuesheet += '  TRACK %02d %s\n' % (t.num, t.track_type)
     for i in t.indexes:
       sector_pos = i['file_offset'] - t.indexes[0]['file_offset']
-      cuesheet += '  INDEX %02d %s\n' % (i['id'], sectors_to_cuestamp(sector_pos))
+      cuesheet += '    INDEX %02d %s\n' % (i['id'], sectors_to_cuestamp(sector_pos))
   return cuesheet
 
 def merge_files(merged_filename, files):
