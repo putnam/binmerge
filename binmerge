@@ -184,7 +184,7 @@ def main():
     print("Output dir does not exist")
     return False
 
-  with open(os.path.join(outdir, args.new_name+'.cue'), 'w') as f:
+  with open(os.path.join(outdir, args.new_name+'.cue'), 'w', newline='\r\n') as f:
     f.write(cuesheet)
   print("Wrote %s" % args.new_name+'.cue')
 
