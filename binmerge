@@ -142,9 +142,9 @@ def merge_files(merged_filename, files):
           outfile.write(chunk)
   return True
 
-def split_files(cue_dir, new_basename, merged_file):
+def split_files(new_basename, merged_file):
   # use calculated sectors, read the same amount, start new file when equal
-  with open(os.path.join(cue_dir, merged_file.filename), 'rb') as infile:
+  with open(merged_file.filename, 'rb') as infile:
     for t in merged_file.tracks:
       chunksize = 1024 * 1024
       out_name = '%s (Track %02d).bin' % (new_basename, t.num)
@@ -190,7 +190,7 @@ def main():
 
   if args.split:
     print("Splitting files...")
-    if split_files(os.path.dirname(args.cuefile), os.path.join(outdir, args.new_name), cue_map[0]):
+    if split_files(os.path.join(outdir, args.new_name), cue_map[0]):
       print("Wrote %d bin files" % len(cue_map[0].tracks))
     else:
       print("Unable to split bin files")
