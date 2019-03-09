@@ -51,4 +51,10 @@ FILE "Big Buddy.bin" BINARY
     INDEX 01 38:52:66
 ```
 
+If you want to return to the split bin format you can instead pass a merged cue file with the --split paramater.
+
+This is useful for example to verify psx split bin files against the Redump project's psx dat file.
+
+Users of MAME's chdman tool may also find this option useful as chdman returns the merged cue format when decompressing.
+
 Have fun!
