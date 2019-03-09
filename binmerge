@@ -66,6 +66,13 @@ def read_cue_file(cue_path):
     if m:
       this_track.indexes.append({'id': int(m.group(1)), 'stamp': m.group(2), 'file_offset':cuestamp_to_sectors(m.group(2))})
 
+  if len(files) == 1:
+    # only 1 file, assume splitting, calc sectors of each
+    next_item_offset = files[0].size // Track.globalBlocksize
+    for t in reversed(files[0].tracks):
+      t.sectors = next_item_offset - t.indexes[0]["file_offset"]
+      next_item_offset = t.indexes[0]["file_offset"]
+
   for f in files:
     print("-- File --")
     print("Filename: %s" % f.filename)
@@ -76,6 +83,7 @@ def read_cue_file(cue_path):
       print("  -- Track --")
       print("  Num: %d" % t.num)
       print("  Type: %s" % t.track_type)
+      if t.sectors: print("  Sectors: %s" % t.sectors)
       print("  Indexes: %s" % repr(t.indexes))
 
   return files
@@ -98,7 +106,7 @@ def cuestamp_to_sectors(stamp):
   return fields + (seconds * 75) + (minutes * 60 * 75)
 
 
-def generate_cuesheet(bin_filename, files):
+def gen_merged_cuesheet(bin_filename, files):
   cuesheet = 'FILE "%s" BINARY\n' % bin_filename
   # One sector is (BLOCKSIZE) bytes
   sector_pos = 0
@@ -108,6 +116,17 @@ def generate_cuesheet(bin_filename, files):
       for i in t.indexes:
         cuesheet += '    INDEX %02d %s\n' % (i['id'], sectors_to_cuestamp(sector_pos + i['file_offset']))
     sector_pos += f.size / Track.globalBlocksize
+  return cuesheet
+
+def gen_split_cuesheet(bin_filename, merged_file):
+  # similar to merged, could have it do both, but separate arguably cleaner
+  cuesheet = ""
+  for t in merged_file.tracks:
+    cuesheet += 'FILE "%s (Track %02d).bin" BINARY\n' % (bin_filename, t.num)
+    cuesheet += '  TRACK %02d %s\n' % (t.num, t.track_type)
+    for i in t.indexes:
+      sector_pos = i['file_offset'] - t.indexes[0]['file_offset']
+      cuesheet += '    INDEX %02d %s\n' % (i['id'], sectors_to_cuestamp(sector_pos))
   return cuesheet
 
 def merge_files(merged_filename, files):
@@ -123,16 +142,39 @@ def merge_files(merged_filename, files):
           outfile.write(chunk)
   return True
 
+def split_files(new_basename, merged_file):
+  # use calculated sectors, read the same amount, start new file when equal
+  with open(merged_file.filename, 'rb') as infile:
+    for t in merged_file.tracks:
+      chunksize = 1024 * 1024
+      out_name = '%s (Track %02d).bin' % (new_basename, t.num)
+      tracksize = t.sectors * Track.globalBlocksize
+      written = 0
+      with open(out_name, 'wb') as outfile:
+        while True:
+          if chunksize + written > tracksize:
+            chunksize = tracksize - written
+          chunk = infile.read(chunksize)
+          outfile.write(chunk)
+          written += chunksize
+          if written == tracksize:
+            break
+  return True
+
 def main():
   parser = argparse.ArgumentParser(description="Using a cuesheet, merges numerous bin files into a single bin file and produces a new cuesheet with corrected offsets. Works great with Redump. Supports all block modes, but only binary track types. Should work on any python3 platform.")
   parser.add_argument('cuefile', help='path to source cuefile with multiple referenced bin tracks')
   parser.add_argument('new_name', help='name (without extension) for your new bin/cue files')
+  parser.add_argument('--split', help='Change mode from merging to splitting to allow reconstruction of the split format.', required=False, action="store_true")
   parser.add_argument('-o', dest='outdir', required=False, default=False, help='output directory. defaults to the same directory as source cue')
   args = parser.parse_args()
 
 
   cue_map = read_cue_file(args.cuefile)
-  cuesheet = generate_cuesheet(args.new_name+'.bin', cue_map)
+  if args.split:
+    cuesheet = gen_split_cuesheet(args.new_name, cue_map[0])
+  else:
+    cuesheet = gen_merged_cuesheet(args.new_name+'.bin', cue_map)
 
   outdir = os.path.dirname(args.cuefile)
   if args.outdir:
@@ -142,14 +184,21 @@ def main():
     print("Output dir does not exist")
     return False
 
-  with open(os.path.join(outdir, args.new_name+'.cue'), 'w') as f:
+  with open(os.path.join(outdir, args.new_name+'.cue'), 'w', newline='\r\n') as f:
     f.write(cuesheet)
   print("Wrote %s" % args.new_name+'.cue')
 
-  print("Merging files...")
-  if merge_files(os.path.join(outdir, args.new_name+'.bin'), cue_map):
-    print("Wrote %s" % args.new_name+'.bin')
+  if args.split:
+    print("Splitting files...")
+    if split_files(os.path.join(outdir, args.new_name), cue_map[0]):
+      print("Wrote %d bin files" % len(cue_map[0].tracks))
+    else:
+      print("Unable to split bin files")
   else:
-    print("Unable to merge bin files")
+    print("Merging files...")
+    if merge_files(os.path.join(outdir, args.new_name+'.bin'), cue_map):
+      print("Wrote %s" % args.new_name+'.bin')
+    else:
+      print("Unable to merge bin files")
 
 main()
