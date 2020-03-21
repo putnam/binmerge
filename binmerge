@@ -49,7 +49,10 @@ def read_cue_file(cue_path):
   files = []
   this_track = None
   this_file = None
-
+  
+  #Adding Track Counter for file Outputting
+  split_counter = 0
+  
   f = open(cue_path, 'r')
   for line in f:
     m = re.search('FILE "?(.*?)"? BINARY', line)
@@ -85,8 +88,10 @@ def read_cue_file(cue_path):
       print("  Type: %s" % t.track_type)
       if t.sectors: print("  Sectors: %s" % t.sectors)
       print("  Indexes: %s" % repr(t.indexes))
+      ##Added Track Counter
+      split_counter += 1
 
-  return files
+  return files, split_counter
 
 
 def sectors_to_cuestamp(sectors):
@@ -118,11 +123,15 @@ def gen_merged_cuesheet(bin_filename, files):
     sector_pos += f.size / Track.globalBlocksize
   return cuesheet
 
-def gen_split_cuesheet(bin_filename, merged_file):
+def gen_split_cuesheet(bin_filename, merged_file, split_counter):
   # similar to merged, could have it do both, but separate arguably cleaner
   cuesheet = ""
   for t in merged_file.tracks:
-    cuesheet += 'FILE "%s (Track %02d).bin" BINARY\n' % (bin_filename, t.num)
+    # If number of tracks is less than 10, then outputted files use single digit track numbers, keeping in line with Redump.
+    if split_counter < 10:
+      cuesheet += 'FILE "%s (Track %01d).bin" BINARY\n' % (bin_filename, t.num)
+    else: 
+      cuesheet += 'FILE "%s (Track %02d).bin" BINARY\n' % (bin_filename, t.num)
     cuesheet += '  TRACK %02d %s\n' % (t.num, t.track_type)
     for i in t.indexes:
       sector_pos = i['file_offset'] - t.indexes[0]['file_offset']
@@ -142,12 +151,16 @@ def merge_files(merged_filename, files):
           outfile.write(chunk)
   return True
 
-def split_files(new_basename, merged_file):
+def split_files(new_basename, merged_file, split_counter):
   # use calculated sectors, read the same amount, start new file when equal
   with open(merged_file.filename, 'rb') as infile:
     for t in merged_file.tracks:
       chunksize = 1024 * 1024
-      out_name = '%s (Track %02d).bin' % (new_basename, t.num)
+      if split_counter < 10:
+        # If the number of tracks is less than 10, it will use single digits for the binary file, keeping in line with Redump.
+        out_name = '%s (Track %01d).bin' % (new_basename, t.num)
+      else:
+        out_name = '%s (Track %02d).bin' % (new_basename, t.num)
       tracksize = t.sectors * Track.globalBlocksize
       written = 0
       with open(out_name, 'wb') as outfile:
@@ -169,10 +182,10 @@ def main():
   parser.add_argument('-o', dest='outdir', required=False, default=False, help='output directory. defaults to the same directory as source cue')
   args = parser.parse_args()
 
-
-  cue_map = read_cue_file(args.cuefile)
+  #Edited to include a Track Counter for Splitting, on lines 187 and 205
+  cue_map, split_counter = read_cue_file(args.cuefile)
   if args.split:
-    cuesheet = gen_split_cuesheet(args.new_name, cue_map[0])
+    cuesheet = gen_split_cuesheet(args.new_name, cue_map[0], split_counter)
   else:
     cuesheet = gen_merged_cuesheet(args.new_name+'.bin', cue_map)
 
@@ -190,7 +203,7 @@ def main():
 
   if args.split:
     print("Splitting files...")
-    if split_files(os.path.join(outdir, args.new_name), cue_map[0]):
+    if split_files(os.path.join(outdir, args.new_name), cue_map[0], split_counter):
       print("Wrote %d bin files" % len(cue_map[0].tracks))
     else:
       print("Unable to split bin files")
