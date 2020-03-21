@@ -182,7 +182,7 @@ def main():
   parser.add_argument('-o', dest='outdir', required=False, default=False, help='output directory. defaults to the same directory as source cue')
   args = parser.parse_args()
 
-  #Edited to include a Track Counter for Splitting, on lines 187 and 205
+  #Edited to include a Track Counter for Splitting
   cue_map, split_counter = read_cue_file(args.cuefile)
   if args.split:
     cuesheet = gen_split_cuesheet(args.new_name, cue_map[0], split_counter)
