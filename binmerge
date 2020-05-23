@@ -1,13 +1,54 @@
 #!/usr/bin/env python3
 #
-# binmerge
-# Takes a cue sheet with multiple binary track files and merges them together,
-# generating a corrected cue sheet in the process.
+#  binmerge
 #
-# Please report any bugs on GitHub: https://github.com/putnam/binmerge
-
-import argparse, re, os, subprocess, sys
+#  Takes a cue sheet with multiple binary track files and merges them together,
+#  generating a corrected cue sheet in the process.
+#
+#  Copyright (C) 2020 Chris Putnam
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License along
+#  with this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+#
+#  Please report any bugs on GitHub: https://github.com/putnam/binmerge
+#
+#
+import argparse, re, os, subprocess, sys, textwrap
 VERBOSE = False
+
+def print_license():
+  print(textwrap.dedent("""
+    binmerge
+    Copyright (C) 2020 Chris Putnam
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Source code available at: https://github.com/putnam/binmerge
+  """))
 
 def d(s):
   if VERBOSE:
@@ -203,14 +244,27 @@ def main():
   parser = argparse.ArgumentParser(description="Using a cuesheet, merges numerous bin files into a single bin file and produces a new cuesheet with corrected offsets. Works great with Redump. Supports all block modes, but only binary track types.")
   parser.add_argument('cuefile', help='path to current cue file (bin files are expected in the same dir)')
   parser.add_argument('basename', help='name (without extension) for your new bin/cue files')
-  parser.add_argument('--split', help='reverses operation, splitting merged files back to individual tracks', required=False, action='store_true')
-  parser.add_argument('-o', dest='outdir', required=False, default=False, help='output directory. defaults to the same directory as source cue')
-  parser.add_argument('-v', dest='verbose', action='store_true', help='print more verbose messages')
+
+  # argparse is bad. make -l work like -h (no args required)
+  class licenseAction(argparse._StoreTrueAction):
+    def __call__(self, parser, namespace, values, option_string=None):
+      print_license()
+      parser.exit()
+
+  parser.add_argument('-l', '--license', default=False, help='prints license info and exit', action=licenseAction)
+  parser.add_argument('-v', '--verbose', action='store_true', help='print more verbose messages')
+  parser.add_argument('-s', '--split', help='reverses operation, splitting merged files back to individual tracks', required=False, action='store_true')
+  parser.add_argument('-o', '--outdir', default=False, help='output directory. defaults to the same directory as source cue')
+
   args = parser.parse_args()
 
   if args.verbose:
     global VERBOSE
     VERBOSE = True
+
+  if args.license:
+    print_license()
+    return False
 
   p("Opening cue: %s" % args.cuefile)
   cue_map = read_cue_file(args.cuefile)
