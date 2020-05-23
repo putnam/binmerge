@@ -262,10 +262,6 @@ def main():
     global VERBOSE
     VERBOSE = True
 
-  if args.license:
-    print_license()
-    return False
-
   p("Opening cue: %s" % args.cuefile)
   cue_map = read_cue_file(args.cuefile)
   if args.split:
