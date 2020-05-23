@@ -1,4 +1,7 @@
 # binmerge
+
+Source code available at: https://github.com/putnam/binmerge
+
 Tool to merge multiple bin/cue tracks into one.
 
 Sometimes people rip discs in such a way that they have a separate bin file for every track. One example that I know of is the Redump project, specifically for the Playstation 1 or PSX.
