@@ -25,7 +25,7 @@
 #  Please report any bugs on GitHub: https://github.com/putnam/binmerge
 #
 #
-import argparse, re, os, subprocess, sys, textwrap
+import argparse, re, os, subprocess, sys, textwrap, traceback
 VERBOSE = False
 
 def print_license():
@@ -97,26 +97,41 @@ class File:
     self.tracks = []
     self.size = os.path.getsize(filename)
 
+class BinFilesMissingException(Exception):
+  pass
+
 def read_cue_file(cue_path):
   files = []
   this_track = None
   this_file = None
+  bin_files_missing = False
 
   f = open(cue_path, 'r')
   for line in f:
     m = re.search('FILE "?(.*?)"? BINARY', line)
     if m:
-      this_file = File(os.path.join(os.path.dirname(cue_path), m.group(1)))
-      files.append(this_file)
+      this_path = os.path.join(os.path.dirname(cue_path), m.group(1))
+      if not (os.path.isfile(this_path) or os.access(this_path, os.R_OK)):
+        e("Bin file not found or not readable: %s" % this_path)
+        bin_files_missing = True
+      else:
+        this_file = File(this_path)
+        files.append(this_file)
+      continue
 
     m = re.search('TRACK (\d+) ([^\s]*)', line)
-    if m:
+    if m and this_file:
       this_track = Track(int(m.group(1)), m.group(2))
       this_file.tracks.append(this_track)
+      continue
 
     m = re.search('INDEX (\d+) (\d+:\d+:\d+)', line)
-    if m:
+    if m and this_track:
       this_track.indexes.append({'id': int(m.group(1)), 'stamp': m.group(2), 'file_offset':cuestamp_to_sectors(m.group(2))})
+      continue
+
+  if bin_files_missing:
+    raise BinFilesMissingException
 
   if len(files) == 1:
     # only 1 file, assume splitting, calc sectors of each
@@ -254,7 +269,7 @@ def main():
   parser.add_argument('-l', '--license', default=False, help='prints license info and exit', action=licenseAction)
   parser.add_argument('-v', '--verbose', action='store_true', help='print more verbose messages')
   parser.add_argument('-s', '--split', help='reverses operation, splitting merged files back to individual tracks', required=False, action='store_true')
-  parser.add_argument('-o', '--outdir', default=False, help='output directory. defaults to the same directory as source cue')
+  parser.add_argument('-o', '--outdir', default=False, help='output directory. defaults to the same directory as source cue. directory will be created (recursively) if needed.')
 
   args = parser.parse_args()
 
@@ -262,16 +277,55 @@ def main():
     global VERBOSE
     VERBOSE = True
 
-  p("Opening cue: %s" % args.cuefile)
-  cue_map = read_cue_file(args.cuefile)
+  # Resolve relative paths and cwd
+  cuefile = os.path.abspath(args.cuefile)
+
+  if not os.path.exists(cuefile):
+    e("Cue file does not exist: %s" % cuefile)
+    return False
+
+  if not os.access(cuefile, os.R_OK):
+    e("Cue file is not readable: %s" % cuefile)
+    return False
+
+  if args.outdir:
+    outdir = os.path.abspath(args.outdir)
+    p("Output directory: %s" % outdir)
+    if not os.path.exists(outdir):
+      try:
+        p("Output directory did not exist; creating it.")
+        os.makedirs(outdir)
+      except:
+        e("Could not create output directory (permissions?)")
+        traceback.print_exc()
+        return False
+  else:
+    outdir = os.path.dirname(cuefile)
+    p("Output directory: %s" % outdir)
+
+  if not (os.path.exists(outdir) or os.path.isdir(outdir)):
+    e("Output directory does not exist or is not a directory: %s" % outdir)
+    return False
+
+  if not os.access(outdir, os.W_OK):
+    e("Output directory is not writable: %s" % outdir)
+    return False
+
+  p("Opening cue: %s" % cuefile)
+  try:
+    cue_map = read_cue_file(cuefile)
+  except BinFilesMissingException:
+    e("One or more bin files were missing on disk. Aborting.")
+    return False
+  except Exception as exc:
+    e("Error parsing cuesheet. Is it valid?")
+    traceback.print_exc()
+    return False
+
   if args.split:
     cuesheet = gen_split_cuesheet(args.basename, cue_map[0])
   else:
     cuesheet = gen_merged_cuesheet(args.basename, cue_map)
-
-  outdir = os.path.dirname(args.cuefile)
-  if args.outdir:
-    outdir = args.outdir
 
   if not os.path.exists(args.outdir):
     e("Output dir does not exist")
@@ -291,8 +345,9 @@ def main():
       return False
   else:
     p("Merging %d tracks..." % len(cue_map))
-    if merge_files(os.path.join(outdir, args.basename+'.bin'), cue_map):
-      p("Wrote %s" % args.basename+'.bin')
+    out_path = os.path.join(outdir, args.basename+'.bin')
+    if merge_files(out_path, cue_map):
+      p("Wrote %s" % out_path)
     else:
       e("Unable to merge bin files.")
       return False
