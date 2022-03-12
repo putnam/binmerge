@@ -33,9 +33,9 @@ FILE "Big Buddy (Track 05).bin" BINARY
 
 Some incomplete software cannot read this style of disc image, because they only know how to work with a single bin file.
 
-This script reads a cuesheet and series of bin files, and generates a new merged bin and cuesheet. It is completely non-destructive; it will not touch your existing files.
+This script reads a cuesheet and series of bin files, and generates a new, single merged bin file and an assocaited cuesheet. It is completely non-destructive; it will not touch your existing files.
 
-Here is the above example after being procesed by binmerge:
+Here is the above example after being processed by binmerge:
 ```
 FILE "Big Buddy.bin" BINARY
   TRACK 01 MODE2/2352
