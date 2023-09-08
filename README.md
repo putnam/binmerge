@@ -54,6 +54,6 @@ FILE "Big Buddy.bin" BINARY
     INDEX 01 38:52:66
 ```
 
-`binmerge` also supports reversing the process if you deleted the original files to save space. If you want to return to the split bin format you can instead pass a merged cue file with the `--split` parameter. However, for systems that have metadata tags (Dreamcast), these tags are currently not preserved by binmerge and will be missing. Complete cuesheet packs are available to download on Redump's site.
+`binmerge` also supports reversing the process if you deleted the original files to save space. If you want to return to the split bin format you can instead pass a merged cue file with the `--split` parameter. However, for systems that have metadata tags (Dreamcast), these tags are currently not preserved by `binmerge` and will be missing. Complete cuesheet packs are available to download on Redump's site.
 
 Have fun!
