@@ -4,9 +4,9 @@ Source code available at: https://github.com/putnam/binmerge
 
 Tool to merge multiple bin/cue tracks into one.
 
-Sometimes people rip discs in such a way that they have a separate bin file for every track. One example that I know of is the Redump project, specifically for the Playstation 1 or PSX.
+Sometimes discs are ripped in such a way that they have a separate bin file for every track. One example that I know of is the Redump project, specifically for the Playstation 1 or PSX.
 
-For example:
+Here is a cuesheet for the imaginary PSX game "Big Buddy". You can see it refers to several individual bin files, one for each track:
 
 ```
 FILE "Big Buddy (Track 01).bin" BINARY
@@ -31,9 +31,9 @@ FILE "Big Buddy (Track 05).bin" BINARY
 ...
 ```
 
-Some incomplete software cannot read this style of disc image, because they only know how to work with a single bin file.
+Some software cannot read this style of disc image, because they only know how to work with a single bin file or are unable to properly parse cuesheets according to the standard.
 
-This script reads a cuesheet and series of bin files, and generates a new, single merged bin file and an assocaited cuesheet. It is completely non-destructive; it will not touch your existing files.
+`binmerge` reads a cuesheet and its associated series of bin files and generates a new, single merged bin file and cuesheet. It is completely non-destructive; it will not touch your existing files.
 
 Here is the above example after being processed by binmerge:
 ```
@@ -54,10 +54,6 @@ FILE "Big Buddy.bin" BINARY
     INDEX 01 38:52:66
 ```
 
-If you want to return to the split bin format you can instead pass a merged cue file with the --split parameter.
-
-This is useful for example to verify PSX split bin files against the Redump project's PSX DAT file.
-
-Users of MAME's chdman tool may also find this option useful as chdman returns the merged cue format when decompressing.
+`binmerge` also supports reversing the process if you deleted the original files to save space. If you want to return to the split bin format you can instead pass a merged cue file with the `--split` parameter. However, for systems that have metadata tags (Dreamcast), these tags are currently not preserved by binmerge and will be missing. Complete cuesheet packs are available to download on Redump's site.
 
 Have fun!
