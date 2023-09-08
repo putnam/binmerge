@@ -177,11 +177,14 @@ def cuestamp_to_sectors(stamp):
 def track_filename(prefix, track_num, track_count):
   # Redump is strangely inconsistent in their datfiles and cuesheets when it
   # comes to track numbers. The naming convention currently seems to be:
+  # If there is exactly one track: "" (nothing)
   # If there are less than 10 tracks: "Track 1", "Track 2", etc.
   # If there are more than 10 tracks: "Track 01", "Track 02", etc.
   #
   # It'd be nice if it were consistently %02d!
   #
+  if track_count == 1:
+    return "%s.bin"
   if track_count > 9:
     return "%s (Track %02d).bin" % (prefix, track_num)
   return "%s (Track %d).bin" % (prefix, track_num)
