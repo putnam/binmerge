@@ -27,10 +27,11 @@
 #
 import argparse, re, os, subprocess, sys, textwrap, traceback
 VERBOSE = False
+VERSION_STRING = "1.0.2"
 
 def print_license():
-  print(textwrap.dedent("""
-    binmerge
+  print(textwrap.dedent(f"""
+    binmerge {VERSION_STRING}
     Copyright (C) 2024 Chris Putnam
 
     This program is free software; you can redistribute it and/or modify
@@ -271,8 +272,7 @@ def main():
     def __call__(self, parser, namespace, values, option_string=None):
       print_license()
       parser.exit()
-
-  parser.add_argument('-l', '--license', default=False, help='prints license info and exit', action=licenseAction)
+  parser.add_argument('-l', '--license', default=False, help='prints license info and exits', action=licenseAction)
   parser.add_argument('-v', '--verbose', action='store_true', help='print more verbose messages')
   parser.add_argument('-s', '--split', help='reverses operation, splitting merged files back to individual tracks', required=False, action='store_true')
   parser.add_argument('-o', '--outdir', default=False, help='output directory. defaults to the same directory as source cue. directory will be created (recursively) if needed.')
