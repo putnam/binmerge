@@ -183,6 +183,9 @@ def track_filename(prefix, track_num, track_count):
   #
   # It'd be nice if it were consistently %02d!
   #
+  # TODO: Migrate everything to pathlib
+  # Use basename in case prefix contains a fully qualified path
+  prefix = os.path.basename(prefix)
   if track_count == 1:
     return "%s.bin" % (prefix)
   if track_count > 9:
