@@ -5,7 +5,7 @@
 #  Takes a cue sheet with multiple binary track files and merges them together,
 #  generating a corrected cue sheet in the process.
 #
-#  Copyright (C) 2023 Chris Putnam
+#  Copyright (C) 2024 Chris Putnam
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ VERBOSE = False
 def print_license():
   print(textwrap.dedent("""
     binmerge
-    Copyright (C) 2023 Chris Putnam
+    Copyright (C) 2024 Chris Putnam
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
