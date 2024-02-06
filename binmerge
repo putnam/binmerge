@@ -98,6 +98,9 @@ class File:
     self.tracks = []
     self.size = os.path.getsize(filename)
 
+class ZeroBinFilesException(Exception):
+  pass
+
 class BinFilesMissingException(Exception):
   pass
 
@@ -133,6 +136,9 @@ def read_cue_file(cue_path):
 
   if bin_files_missing:
     raise BinFilesMissingException
+
+  if not len(files):
+    raise ZeroBinFilesException
 
   if len(files) == 1:
     # only 1 file, assume splitting, calc sectors of each
@@ -322,6 +328,9 @@ def main():
     cue_map = read_cue_file(cuefile)
   except BinFilesMissingException:
     e("One or more bin files were missing on disk. Aborting.")
+    return False
+  except ZeroBinFilesException:
+    e("Unable to parse any bin files in the cuesheet. Is it empty?")
     return False
   except Exception as exc:
     e("Error parsing cuesheet. Is it valid?")
