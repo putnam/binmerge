@@ -18,7 +18,7 @@ jobs:
     - run: pip install pyinstaller
     - run: pyinstaller -F binmerge
     # Optionally verify that it works (provided that it does not need user interaction)
-    - run: ./dist/binmerge.exe
+    - run: ./dist/binmerge.exe --help
     - uses: actions/upload-artifact@v2
       with:
         path: dist/*
