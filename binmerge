@@ -27,7 +27,7 @@
 #
 import argparse, re, os, subprocess, sys, textwrap, traceback
 VERBOSE = False
-VERSION_STRING = "1.0.2"
+VERSION_STRING = "1.0.3"
 
 def print_license():
   print(textwrap.dedent(f"""
