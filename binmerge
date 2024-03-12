@@ -180,7 +180,7 @@ def cuestamp_to_sectors(stamp):
   return fields + (seconds * 75) + (minutes * 60 * 75)
 
 # Generates track filename based on redump naming convention
-# (Note: prefix may contain a fully qualified path)
+# (Note: prefix should NEVER contain a path; this function deals only in filenames)
 def track_filename(prefix, track_num, track_count):
   # Redump is strangely inconsistent in their datfiles and cuesheets when it
   # comes to track numbers. The naming convention currently seems to be:
@@ -191,8 +191,6 @@ def track_filename(prefix, track_num, track_count):
   # It'd be nice if it were consistently %02d!
   #
   # TODO: Migrate everything to pathlib
-  # Use basename in case prefix contains a fully qualified path
-  prefix = os.path.basename(prefix)
   if track_count == 1:
     return "%s.bin" % (prefix)
   if track_count > 9:
@@ -243,21 +241,24 @@ def merge_files(merged_filename, files):
   return True
 
 # Writes each track in a File to a new file
-def split_files(new_basename, merged_file):
+def split_files(new_basename, merged_file, outdir):
   with open(merged_file.filename, 'rb') as infile:
     # Check all tracks for potential file-clobbering first before writing anything
     for t in merged_file.tracks:
-      out_name = track_filename(new_basename, t.num, len(merged_file.tracks))
-      if os.path.exists(out_name):
-        e('Target bin path already exists: %s' % out_name)
+      out_basename = track_filename(new_basename, t.num, len(merged_file.tracks))
+      out_path = os.path.join(outdir, out_basename)
+      if os.path.exists(out_path):
+        e('Target bin path already exists: %s' % out_path)
         return False
 
     for t in merged_file.tracks:
       chunksize = 1024 * 1024
-      out_name = track_filename(new_basename, t.num, len(merged_file.tracks))
+      out_basename = track_filename(new_basename, t.num, len(merged_file.tracks))
+      out_path = os.path.join(outdir, out_basename)
       tracksize = t.sectors * Track.globalBlocksize
       written = 0
-      with open(out_name, 'wb') as outfile:
+      with open(out_path, 'wb') as outfile:
+        d('Writing bin file: %s' % out_path)
         while True:
           if chunksize + written > tracksize:
             chunksize = tracksize - written
@@ -271,7 +272,7 @@ def split_files(new_basename, merged_file):
 def main():
   parser = argparse.ArgumentParser(description="Using a cuesheet, merges numerous bin files into a single bin file and produces a new cuesheet with corrected offsets. Works great with Redump. Supports all block modes, but only binary track types.")
   parser.add_argument('cuefile', help='path to current cue file (bin files are expected in the same dir)')
-  parser.add_argument('basename', help='name (without extension) for your new bin/cue files')
+  parser.add_argument('basename', help='name (without extension) for your new bin/cue files; will be placed in the same dir as input unless --outdir is specified')
 
   # argparse is bad. make -l work like -h (no args required)
   class licenseAction(argparse._StoreTrueAction):
@@ -353,7 +354,7 @@ def main():
 
   if args.split:
     p("Splitting files...")
-    if split_files(os.path.join(outdir, args.basename), cue_map[0]):
+    if split_files(args.basename, cue_map[0], outdir):
       p("Wrote %d bin files" % len(cue_map[0].tracks))
     else:
       e("Unable to split bin files.")
