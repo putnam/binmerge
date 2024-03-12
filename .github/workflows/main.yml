@@ -1,0 +1,24 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['windows-latest']
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.12
+
+    - run: pip install pyinstaller
+    - run: pyinstaller -F binmerge
+    # Optionally verify that it works (provided that it does not need user interaction)
+    - run: ./dist/binmerge.exe --help
+    - uses: actions/upload-artifact@v2
+      with:
+        path: dist/*
