@@ -18,7 +18,7 @@ This will create two new files, "My Great Game (Merged).bin" and "My Great Game 
 
 To control the output directory, use the --outdir flag:
 
-`./binmerge -o "/mnt/stuff/merged-games" "/path/to/My Great Game.cue" "My Great Game (Merged)"`
+`./binmerge --outdir "/mnt/stuff/merged-games" "/path/to/My Great Game.cue" "My Great Game (Merged)"`
 
 ### Example: Split a merged image
 
