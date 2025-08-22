@@ -343,7 +343,7 @@ def main():
   else:
     cuesheet = gen_merged_cuesheet(args.basename, cue_map)
 
-  if not os.path.exists(args.outdir):
+  if not os.path.exists(outdir):
     e("Output dir does not exist")
     return False
 
